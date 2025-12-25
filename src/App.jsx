@@ -6,7 +6,8 @@ import LandingPage from './pages/LandingPage';
 import AdminLoginPage from './pages/admin/AdminLoginPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import { useAuth } from './context/AuthContext';
-import { useTenant } from './context/TenantContext';
+import { useTenant } from './context/TenantContext'; // Ensure this hook is exported from context
+import ThemeApplicator from './components/ThemeApplicator';
 
 function TenantRoutes() {
     const { user } = useAuth();
@@ -45,12 +46,15 @@ function TenantRoutes() {
 
 export default function App() {
     return (
-        <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/admin" element={<AdminLoginPage />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/b/:tenantId/*" element={<TenantRoutes />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <>
+            <ThemeApplicator />
+            <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/admin" element={<AdminLoginPage />} />
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/b/:tenantId/*" element={<TenantRoutes />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+        </>
     );
 }

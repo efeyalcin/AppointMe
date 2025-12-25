@@ -1,24 +1,53 @@
 import { format } from 'date-fns';
 
+// Helper to get bookings from storage
+const getBookings = () => {
+    try {
+        const stored = localStorage.getItem('datefind_bookings');
+        if (stored) return JSON.parse(stored);
+    } catch (e) {
+        console.error("Failed to parse bookings", e);
+    }
+    return [];
+};
+
 export const MockBookingService = {
+    // Get all bookings for a tenant (Admin View)
+    getTenantBookings: async (tenantId) => {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                const allBookings = getBookings();
+                const tenantBookings = allBookings.filter(b => b.tenantId === tenantId);
+                resolve(tenantBookings);
+            }, 400);
+        });
+    },
+
     getAvailableSlots: (tenantId, date) => {
-        // Generate slots from 10 AM to 10 PM (22:00)
+        const bookings = getBookings();
+        const dateStr = format(date, 'yyyy-MM-dd');
+
+        // Find bookings for this tenant on this date
+        const takenTimes = bookings
+            .filter(b => b.tenantId === tenantId && b.date === dateStr)
+            .map(b => b.time);
+
         const slots = [];
         const startHour = 10;
         const endHour = 22;
-        const dateStr = format(date, 'yyyy-MM-dd');
 
-        // Create a unique seed based on tenantId AND date for varied availability
         const seedStr = tenantId + dateStr;
         const hash = seedStr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
 
         for (let hour = startHour; hour <= endHour; hour++) {
             const time = `${hour.toString().padStart(2, '0')}:00`;
-            // Simulate different availability patterns per tenant
-            // e.g., Barber is busier (mod 3), Dentist less busy (mod 5)
-            const divisor = tenantId.length % 2 === 0 ? 3 : 5;
 
-            if ((hash + hour) % divisor !== 0) {
+            // Availability Logic (Deterministic Random)
+            const divisor = tenantId.length % 2 === 0 ? 3 : 5;
+            const isRandomlyAvailable = (hash + hour) % divisor !== 0;
+
+            // Check if slot is already booked
+            if (isRandomlyAvailable && !takenTimes.includes(time)) {
                 slots.push(time);
             }
         }
@@ -36,7 +65,10 @@ export const MockBookingService = {
                     createdAt: new Date().toISOString()
                 };
 
-                // Here we would effectively save to DB
+                const bookings = getBookings();
+                bookings.push(newBooking);
+                localStorage.setItem('datefind_bookings', JSON.stringify(bookings));
+
                 console.log(`[MockBookingService] Created booking for ${tenantId}:`, newBooking);
 
                 resolve(newBooking);
