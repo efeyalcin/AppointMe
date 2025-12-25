@@ -14,16 +14,24 @@ export const BookingProvider = ({ children }) => {
 
     // Mock availability data
     const getAvailableSlots = (date) => {
-        // Generate mock slots for demo purposes
-        // In a real app, this would fetch from API
+        // Generate slots from 10 AM to 10 PM (22:00)
+        const slots = [];
+        const startHour = 10;
+        const endHour = 22;
         const dateStr = format(date, 'yyyy-MM-dd');
-        const slots = [
-            '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00'
-        ];
-        // Randomly remove some slots to simulate unavailability
-        // Use simple hash of date string to make it deterministic but "random"
+
+        // Deterministic random seed from date
         const hash = dateStr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        return slots.filter((_, i) => (hash + i) % 3 !== 0);
+
+        for (let hour = startHour; hour <= endHour; hour++) {
+            // Format as HH:00
+            const time = `${hour.toString().padStart(2, '0')}:00`;
+            // Simulate randomness: if hash + hour is divisible by 5, slot is taken
+            if ((hash + hour) % 5 !== 0) {
+                slots.push(time);
+            }
+        }
+        return slots;
     };
 
     const confirmBooking = async () => {
@@ -37,6 +45,13 @@ export const BookingProvider = ({ children }) => {
                     status: 'Confirmed'
                 };
                 setBookingDetails(details);
+
+                // MOCK SMS NOTIFICATION
+                console.log(`[Mock SMS] Sent to user: "Your appointment is confirmed for ${details.date} at ${details.time}."`);
+                // In browser environment we generally can't just alert without blocking, 
+                // but since user requested "an SMS... is sent", we log it or show a toast. 
+                // The ConfirmationPage handles visual feedback.
+
                 resolve(details);
             }, 1000);
         });

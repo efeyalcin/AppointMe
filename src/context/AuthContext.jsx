@@ -19,40 +19,32 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
-    const login = async (email, password) => {
-        // Mock login logic
+    const login = async (name, phone) => {
+        // Mock login logic - requiring Name and Phone
         return new Promise((resolve, reject) => {
             setTimeout(() => {
-                if (email && password) {
-                    // Simulate existing user with or without profile
-                    const mockUser = { id: '1', email, profileComplete: true, name: 'Test User', phone: '123-456-7890' };
+                if (name && phone) {
+                    // Simulate login
+                    const mockUser = { id: '1', name, phone, profileComplete: true };
                     setUser(mockUser);
                     localStorage.setItem('datefind_user', JSON.stringify(mockUser));
                     resolve(mockUser);
                 } else {
-                    reject(new Error("Invalid credentials"));
+                    reject(new Error("Please provide both Name and Phone Number."));
                 }
             }, 500);
         });
     };
 
-    const signup = async (email, password) => {
-        // Mock signup logic
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const mockUser = { id: '2', email, profileComplete: false };
-                // In a real app, we wouldn't auto-login or would need token
-                setUser(mockUser);
-                localStorage.setItem('datefind_user', JSON.stringify(mockUser));
-                resolve(mockUser);
-            }, 500);
-        });
+    const signup = async (name, phone) => {
+        // Mock signup logic - effectively same as login for this demo
+        return login(name, phone);
     };
 
     const updateProfile = async (data) => {
         return new Promise((resolve) => {
             setTimeout(() => {
-                const updatedUser = { ...user, ...data, profileComplete: true };
+                const updatedUser = { ...user, ...data };
                 setUser(updatedUser);
                 localStorage.setItem('datefind_user', JSON.stringify(updatedUser));
                 resolve(updatedUser);
