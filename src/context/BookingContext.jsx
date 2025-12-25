@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useState } from 'react';
-import { addDays, format, startOfToday } from 'date-fns';
+import { format, startOfToday } from 'date-fns';
+import { useTenant } from './TenantContext';
+import { useAuth } from './AuthContext';
+import { MockBookingService } from '../services/MockBookingService';
 
 const BookingContext = createContext();
 
@@ -11,49 +14,48 @@ export const BookingProvider = ({ children }) => {
     const [selectedDate, setSelectedDate] = useState(startOfToday());
     const [selectedTime, setSelectedTime] = useState(null);
     const [bookingDetails, setBookingDetails] = useState(null);
+    const { tenant } = useTenant();
+    const { user } = useAuth();
 
-    // Mock availability data
+    // Validates slots against Mock DB
     const getAvailableSlots = (date) => {
-        // Generate slots from 10 AM to 10 PM (22:00)
-        const slots = [];
-        const startHour = 10;
-        const endHour = 22;
-        const dateStr = format(date, 'yyyy-MM-dd');
-
-        // Deterministic random seed from date
-        const hash = dateStr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-
-        for (let hour = startHour; hour <= endHour; hour++) {
-            // Format as HH:00
-            const time = `${hour.toString().padStart(2, '0')}:00`;
-            // Simulate randomness: if hash + hour is divisible by 5, slot is taken
-            if ((hash + hour) % 5 !== 0) {
-                slots.push(time);
-            }
-        }
-        return slots;
+        if (!tenant) return []; // Or default behavior
+        // If tenant is missing (e.g. root landing), maybe return empty or generic
+        return MockBookingService.getAvailableSlots(tenant?.id || 'default', date);
     };
 
     const confirmBooking = async () => {
-        // Mock API call
         return new Promise((resolve) => {
-            setTimeout(() => {
+            // Check essential data
+            if (!tenant || !selectedTime) {
+                console.error("Missing tenant or time");
+                resolve(null);
+                return;
+            }
+
+            // Prepare payload
+            const bookingPayload = {
+                date: format(selectedDate, 'yyyy-MM-dd'),
+                time: selectedTime,
+                customerName: user?.name || 'Guest',
+                customerPhone: user?.phone || 'N/A'
+            };
+
+            // Call Service
+            MockBookingService.createBooking(tenant.id, bookingPayload).then(savedBooking => {
                 const details = {
-                    id: Math.random().toString(36).substr(2, 9),
+                    ...savedBooking,
+                    // Format for UI display on Confirmation Page
                     date: format(selectedDate, 'MMMM do, yyyy'),
-                    time: selectedTime,
-                    status: 'Confirmed'
+                    displayDate: format(selectedDate, 'MMMM do, yyyy')
                 };
                 setBookingDetails(details);
 
-                // MOCK SMS NOTIFICATION
+                // Mock SMS
                 console.log(`[Mock SMS] Sent to user: "Your appointment is confirmed for ${details.date} at ${details.time}."`);
-                // In browser environment we generally can't just alert without blocking, 
-                // but since user requested "an SMS... is sent", we log it or show a toast. 
-                // The ConfirmationPage handles visual feedback.
 
                 resolve(details);
-            }, 1000);
+            });
         });
     };
 
