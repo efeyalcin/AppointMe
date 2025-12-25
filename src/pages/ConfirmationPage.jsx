@@ -1,23 +1,25 @@
 import { useEffect } from 'react';
 import { useBooking } from '../context/BookingContext';
+import { useTenant } from '../context/TenantContext'; // Added
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Calendar, Clock, Home } from 'lucide-react';
 
 export default function ConfirmationPage() {
     const { bookingDetails, resetBooking } = useBooking();
+    const { tenant } = useTenant(); // Added hook
     const navigate = useNavigate();
 
     useEffect(() => {
         if (!bookingDetails) {
-            navigate('/');
+            navigate(tenant ? `/b/${tenant.id}/` : '/');
         }
-    }, [bookingDetails, navigate]);
+    }, [bookingDetails, navigate, tenant]);
 
     if (!bookingDetails) return null;
 
     const handleReturnHome = () => {
         resetBooking(); // Clears state
-        navigate('/');
+        navigate(tenant ? `/b/${tenant.id}/` : '/');
     };
 
     return (

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTenant } from '../context/TenantContext'; // Added
 import { useNavigate } from 'react-router-dom';
 import { Calendar, User, Phone, ArrowRight } from 'lucide-react';
 
@@ -7,6 +8,7 @@ export default function LoginPage() {
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const { login } = useAuth();
+    const { tenant } = useTenant(); // Added
     const navigate = useNavigate();
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -17,7 +19,8 @@ export default function LoginPage() {
         setLoading(true);
         try {
             await login(name, phone);
-            navigate('/');
+            // Navigate to tenant root, which redirects to dashboard if logged in
+            navigate(`/b/${tenant?.id || 'barber-shop'}/`);
         } catch (err) {
             setError('Failed to log in: ' + err.message);
         }
@@ -32,7 +35,7 @@ export default function LoginPage() {
                         <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-300" />
                     </div>
                     <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
-                        Welcome
+                        {tenant?.name || "Welcome"}
                     </h2>
                     <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                         Enter your details to manage your appointments
